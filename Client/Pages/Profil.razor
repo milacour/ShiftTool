@@ -1,0 +1,145 @@
+@page "/profil"
+@using ShiftTool.Shared.DTOs
+@using ShiftTool.Client.Services
+@using ShiftTool.Shared.Interfaces
+@inject UserState userState
+@inject MessageService messageService
+@inject IUserService userService
+@inject IBookingService bookingService
+@inject NavigationManager NavigationManager
+
+<h3>Min Profil</h3>
+
+@if (userState.IsLoggedIn && userDTO != null)
+{
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 mt-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title"><strong>Brugeroplysninger</strong></h3>
+                        <p><strong>@userDTO.FullName</strong> @(userDTO.IsCoordinator ? "(Koordinator)" : "")</p>
+                        <p><strong>E-mail:</strong> @userDTO.Email</p>
+                        <p><strong>Telefonnummer:</strong> @userDTO.PhoneNumber</p>
+                        <p><strong>Erfaring:</strong> @userDTO.Experience</p>
+                        <p><strong>Færdigheder:</strong> @userDTO.Skills</p>
+
+                        <button type="button" class="btn btn-primary" @onclick="ToggleEdit">Rediger Oplysninger</button>
+                    </div>
+                </div>
+            </div>
+
+            @if (IsEditEnabled)
+            {
+                <div class="col-md-6 mt-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <EditForm Model="@userDTO" OnValidSubmit="SaveUser">
+                                <div class="form-group">
+                                    <label for="fullName">Fulde Navn:</label>
+                                    <input type="text" class="form-control" id="fullName" @bind="@userDTO.FullName" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="email">E-mail:</label>
+                                    <input type="text" class="form-control" id="email" @bind="@userDTO.Email" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="phoneNumber">Telefonnummer:</label>
+                                    <input type="text" class="form-control" id="phoneNumber" @bind="@userDTO.PhoneNumber" />
+                                </div>
+                                <div class="form-group">
+                                    <label for="experience">Erfaring:</label>
+                                    <select class="form-control" id="experience" @onchange="OnExperienceChange">
+                                        <option value="" disabled selected>Vælg Erfaring</option>
+                                        <option value="0-1">0-1 år</option>
+                                        <option value="1-3">1-3 år</option>
+                                        <option value="3-5">3-5 år</option>
+                                        <option value="5-10">5-10 år</option>
+                                        <option value="10+">10+ år</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="skills">Færdigheder:</label>
+                                    <textarea class="form-control" id="skills" @bind="@userDTO.Skills" rows="1"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Gem</button>
+                            </EditForm>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+   
+
+@code {
+    private UserDTO userDTO;
+    private bool IsEditEnabled = false;
+    private string tempExperience;
+    private IEnumerable<BookingDTO> userBookings;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userState.OnUserStateChanged += StateHasChanged;
+
+        if (userState.IsLoggedIn)
+        {
+            userDTO = userState.CurrentUser;
+            tempExperience = userDTO?.Experience;
+            await LoadUserBookings();
+        }
+    }
+
+    private async Task LoadUserBookings()
+    {
+        isLoading = true;
+        if (userDTO != null)
+        {
+            userBookings = await bookingService.GetUserBookingsAsync(userDTO.Email) ?? new List<BookingDTO>();
+        }
+        isLoading = false;
+    }
+
+    // Metoder til redigering og gemning af brugeroplysninger...
+
+    public void Dispose()
+    {
+        userState.OnUserStateChanged -= StateHasChanged;
+    }
+
+    private void ToggleEdit()
+    {
+        IsEditEnabled = !IsEditEnabled;
+        if (!IsEditEnabled)
+        {
+            // Når man forlader redigeringstilstand, reset til oprindelige værdier
+            userDTO.Experience = tempExperience;
+        }
+    }
+
+    private void OnExperienceChange(ChangeEventArgs e)
+    {
+        tempExperience = e.Value?.ToString();
+    }
+
+    private async Task SaveUser()
+    {
+        if (IsEditEnabled)
+        {
+            userDTO.Experience = tempExperience;
+            var response = await userService.UpdateUserAsync(userDTO);
+            if (response.IsSuccessStatusCode)
+            {
+                messageService.SendMessage("Brugeroplysninger opdateret succesfuldt.", false);
+                userState.UpdateUser(userDTO);
+            }
+            else
+            {
+                messageService.SendMessage("Fejl ved opdatering af brugeroplysninger.", true);
+            }
+            ToggleEdit();
+        }
+    }
+}

@@ -1,0 +1,105 @@
+@import '_content/Blazored.Modal/Blazored.Modal.bundle.scp.css';
+
+/* /Shared/MainLayout.razor.rz.scp.css */
+.page[b-ue12j0c5j8] {
+    background-color: #333;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+}
+
+main[b-ue12j0c5j8] {
+    flex: auto;
+    overflow-y: auto;
+}
+
+
+
+.sidebar[b-ue12j0c5j8] {
+    background: linear-gradient(to right, #444, #000);
+    transition: background-color 0.3s ease, width 0.3s;
+    min-width: 15vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-row[b-ue12j0c5j8] {
+    background: linear-gradient(to right, #000, #000, #444);
+    border-bottom: 1px solid #000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    height: 3.5rem;
+}
+
+    .top-row[b-ue12j0c5j8]  a, .top-row[b-ue12j0c5j8]  .btn-link {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+        text-decoration: none;
+        color: #0071c1;
+        transition: color 0.2s ease;
+    }
+
+        .top-row[b-ue12j0c5j8]  a:hover, .top-row[b-ue12j0c5j8]  .btn-link:hover {
+            color: #fff;
+        }
+
+        .top-row[b-ue12j0c5j8]  a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+/* /Shared/NavMenu.razor.rz.scp.css */
+.navbar-toggler[b-dwvujiiut8] {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.top-row[b-dwvujiiut8] {
+    align-items: center;
+    height: 3.5rem;
+    background: linear-gradient(to right, #444, #000);
+    transition: background-color 0.3s ease;
+}
+
+.container-fluid[b-dwvujiiut8] {
+    align-content: center;
+    justify-content: space-between;
+    display: flex;
+    flex-direction: column;
+}
+
+.nav-item[b-dwvujiiut8]  a,
+.nav-item[b-dwvujiiut8]  button {
+    color: #0071c1;
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    width: 100%;
+    font-size: 1.2rem;
+    text-decoration: none;
+    background-color: transparent;
+    border: none;
+    padding: 1.2rem 25px;
+    margin: 1rem 0;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.nav-item[b-dwvujiiut8]  .oi {
+    margin-right: 10px;
+    color: white;
+}
+
+.nav-item[b-dwvujiiut8]  a:hover,
+.nav-item[b-dwvujiiut8]  button:hover {
+    background-color: rgba(255, 255, 255, 0.20);
+    color: white;
+}
+
+.nav-item[b-dwvujiiut8]  a.active,
+.nav-item[b-dwvujiiut8]  button.active {
+    background-color: rgba(255, 255, 255, 0.40);
+    color: white;
+}

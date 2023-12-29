@@ -1,0 +1,158 @@
+﻿@page "/crudvagt"
+@using System
+@using ShiftTool.Shared.DTOs
+@using ShiftTool.Client.Services
+@using ShiftTool.Shared.Interfaces
+@using Blazored.Modal
+@using Blazored.Modal.Services
+@inject IShiftService ShiftService
+@inject UserState userState
+@inject IModalService modalService
+@inject MessageService messageService
+
+@if (userState.IsLoggedIn && userState.CurrentUser.IsCoordinator)
+{
+    <div class="card">
+        <div class="card-body">
+            <h3>Opret Vagt</h3>
+            <EditForm Model="@currentShift" OnValidSubmit="@HandleSubmit">
+                <!-- Formular for Oprettelse og Redigering af Vagt -->
+                <div class="mb-3">
+                    <label for="title" class="form-label">Titel:</label>
+                    <InputText id="title" class="form-control" @bind-Value="currentShift.Title" />
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Beskrivelse:</label>
+                    <InputTextArea id="description" class="form-control" @bind-Value="currentShift.Description" />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Startdato:</label>
+                    <input type="date" class="form-control"
+                           @bind="currentShift.StartDateTime"
+                           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                </div>
+                @if (currentShift.StartDateTime != default(DateTime))
+                {
+                    <div class="mb-3">
+                        <label class="form-label">Starttidspunkt:</label>
+                        <select @onchange="UpdateStartAndEndTime" class="form-control">
+                            <option value="" disabled selected>Vælg tidspunkt</option>
+                            <option value="00:00">00:00</option>
+                            <option value="08:00">08:00</option>
+                            <option value="16:00">16:00</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sluttidspunkt:</label>
+                        <input type="text" class="form-control" @bind="currentShift.EndDateTime" disabled />
+                    </div>
+                }
+                <div class="mb-3">
+                    <label for="priority" class="form-label">Prioritet:</label>
+                    <select id="priority" class="form-control" @bind="currentShift.Priority">
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Gem</button>
+            </EditForm>
+        </div>
+    </div>
+    <div class="vagt-list">
+        @if (shifts != null)
+        {
+            @foreach (var shift in shifts)
+            {
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">@shift.Title</h5>
+                        <p class="card-text">@shift.Description</p>
+                        <p class="card-text">Shift ID: @shift.ShiftId</p>
+                        <p class="card-text">Start: @shift.StartDateTime</p>
+                        <p class="card-text">Slut: @shift.EndDateTime</p>
+                        <p class="card-text">Prioritet: @shift.Priority</p>
+                        <p class="card-text">Er booket: @shift.IsBooked</p>
+                        <button class="btn btn-primary" @onclick="() => UpdateShift(shift)">Rediger</button>
+                        <button class="btn btn-danger" @onclick="() => DeleteShift(shift)">Slet</button>
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <p>Indlæser vagter...</p>
+        }
+    </div>
+}
+else
+{
+    <p>Du har ikke adgang til denne side.</p>
+}
+
+@code {
+    private ShiftDTO currentShift = new ShiftDTO();
+    private IEnumerable<ShiftDTO> shifts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        shifts = await ShiftService.GetAllShiftsAsync() ?? new List<ShiftDTO>();
+    }
+
+    private async Task UpdateShift(ShiftDTO shift)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Shift", shift);
+
+        var modal = modalService.Show<UpdateShiftModal>("Rediger Vagt", parameters);
+        var result = await modal.Result;
+
+        if (!result.Cancelled)
+        {
+            shifts = await ShiftService.GetAllShiftsAsync() ?? new List<ShiftDTO>();
+        }
+    }
+
+    private async Task DeleteShift(ShiftDTO shift)
+    {
+        await ShiftService.DeleteShiftAsync(shift.ShiftId);
+        shifts = await ShiftService.GetAllShiftsAsync() ?? new List<ShiftDTO>();
+    }
+
+    private void UpdateStartAndEndTime(ChangeEventArgs e)
+    {
+        if (TimeSpan.TryParse(e.Value?.ToString(), out var time))
+        {
+            var startDate = currentShift.StartDateTime.Date;
+            currentShift.StartDateTime = startDate + time;
+            currentShift.EndDateTime = currentShift.StartDateTime.AddHours(8);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (!IsDateValid(currentShift.StartDateTime, currentShift.EndDateTime))
+        {
+            return; // Vis en fejlmeddelelse til brugeren
+        }
+
+        if (currentShift.ShiftId == 0)
+        {
+            await ShiftService.CreateShiftAsync(currentShift);
+        }
+        else
+        {
+            await ShiftService.UpdateShiftAsync(currentShift.ShiftId, currentShift);
+        }
+
+        currentShift = new ShiftDTO();
+        shifts = await ShiftService.GetAllShiftsAsync() ?? new List<ShiftDTO>();
+    }
+
+    private bool IsDateValid(DateTime startDateTime, DateTime endDateTime)
+    {
+        return startDateTime >= DateTime.Now && endDateTime > startDateTime;
+    }
+}

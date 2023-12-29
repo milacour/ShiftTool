@@ -1,0 +1,104 @@
+﻿@using Blazored.LocalStorage
+@using ShiftTool.Client.Services
+@inject NavigationManager NavigationManager
+@inject ILocalStorageService localStorage
+@inject UserState userState
+@inject MessageService messageService
+@inject IUserService userService
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand my-2" href="/">
+            <img src="logo.png" alt="Logo" style="width: 8rem;">
+        </a>
+        @if (userState.CurrentUser != null)
+        {
+            <button title="Navigation menu" class="navbar-toggler my-2" @onclick="ToggleNavMenu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="@NavMenuCssClass nav-scrollable">
+                <div class="@NavMenuCssClass nav-scrollable">
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="profil">
+                            <span class="oi oi-person" aria-hidden="true"></span>Profil
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="bookvagt">
+                            <span class="oi oi-plus" aria-hidden="true"></span>Book Vagt
+                        </NavLink>
+                    </div>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="crudvagt">
+                            <span class="oi oi-wrench" aria-hidden="true"></span>Crud Vagt
+                        </NavLink>
+                    </div>
+                    @if (userState.CurrentUser != null)
+                    {
+                        <div class="nav-item px-3">
+                            <button class="btn nav-link" style="width: 100%;" @onclick="HandleLogout">
+                                <span class="oi oi-lock-locked" aria-hidden="true"></span> Log ud
+                            </button>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="nav-item px-3">
+                            <button class="btn nav-link" style="width: 100%;" @onclick="NavigateToIndex">
+                                <span class="oi oi-lock-locked" aria-hidden="true"></span> Login
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code {
+    private bool collapseNavMenu = true;
+    private string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    protected override void OnInitialized()
+    {
+        userState.OnUserStateChanged += UpdateNavMenuState;
+        UpdateNavMenuState();
+    }
+
+    private void UpdateNavMenuState()
+    {
+        collapseNavMenu = userState.CurrentUser == null;
+        StateHasChanged();
+    }
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private async Task HandleLogout()
+    {
+        try
+        {
+            userState.Logout(); // Nulstil sessionen
+            NavigationManager.NavigateTo("/login");
+            messageService.SendMessage("Du er nu logget ud.", false);
+        }
+        catch (Exception ex)
+        {
+            messageService.SendMessage($"En fejl opstod under logout: {ex.Message}", true);
+        }
+    }
+
+
+    private void NavigateToIndex()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    public void Dispose()
+    {
+        userState.OnUserStateChanged -= UpdateNavMenuState;
+    }
+}

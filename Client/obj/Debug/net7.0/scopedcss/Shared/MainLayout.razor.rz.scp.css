@@ -1,0 +1,51 @@
+.page[b-ue12j0c5j8] {
+    background-color: #333;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+    width: 100vw;
+}
+
+main[b-ue12j0c5j8] {
+    flex: auto;
+    overflow-y: auto;
+}
+
+
+
+.sidebar[b-ue12j0c5j8] {
+    background: linear-gradient(to right, #444, #000);
+    transition: background-color 0.3s ease, width 0.3s;
+    min-width: 15vw;
+    display: flex;
+    flex-direction: column;
+}
+
+.top-row[b-ue12j0c5j8] {
+    background: linear-gradient(to right, #000, #000, #444);
+    border-bottom: 1px solid #000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    height: 3.5rem;
+}
+
+    .top-row[b-ue12j0c5j8]  a, .top-row[b-ue12j0c5j8]  .btn-link {
+        white-space: nowrap;
+        margin-left: 1.5rem;
+        text-decoration: none;
+        color: #0071c1;
+        transition: color 0.2s ease;
+    }
+
+        .top-row[b-ue12j0c5j8]  a:hover, .top-row[b-ue12j0c5j8]  .btn-link:hover {
+            color: #fff;
+        }
+
+        .top-row[b-ue12j0c5j8]  a:first-child {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+

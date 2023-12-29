@@ -1,0 +1,62 @@
+﻿@page "/login"
+@using ShiftTool.Shared.DTOs
+@using ShiftTool.Client.Services
+@using ShiftTool.Client.Helpers
+@using Blazored.LocalStorage
+@using System.Text.Json;
+@inject IUserService userService
+@inject NavigationManager NavigationManager
+@inject UserState userState
+@inject MessageService messageService
+@inject ILocalStorageService localStorage
+
+<div class="container">
+    <div class="card mt-5">
+        <div class="card-body">
+            <EditForm Model="@userDto" OnValidSubmit="HandleLogin" class="p-4">
+                <h3 class="mb-3">Login</h3>
+
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail:</label>
+                    <InputText id="email" class="form-control" @bind-Value="userDto.Email" />
+                </div>
+
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password:</label>
+                    <InputText id="password" class="form-control" type="password" @bind-Value="userDto.Password" />
+                </div>
+                <button type="submit" class="btn btn-primary">Login</button>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+
+@code {
+    private UserDTO userDto = new UserDTO();
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            // Hent gemte brugeroplysninger fra localStorage
+            var storedUser = await localStorage.GetItemAsync<UserDTO>("user");
+            if (storedUser != null && storedUser.Email == userDto.Email && storedUser.Password == userDto.Password)
+            {
+                // Genbrug de gemte oplysninger for at logge ind
+                userState.Login(storedUser);
+                NavigationManager.NavigateTo("/profil");
+            }
+            else
+            {
+                messageService.SendMessage("Login fejlede. De indtastede oplysninger matcher ikke de gemte oplysninger.", true);
+            }
+        }
+        catch (Exception ex)
+        {
+            messageService.SendMessage($"En fejl opstod under forsøget på at logge ind: {ex.Message}", true);
+        }
+    }
+
+}
+

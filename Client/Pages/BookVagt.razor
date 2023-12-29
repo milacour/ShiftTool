@@ -1,0 +1,104 @@
+﻿@page "/bookvagt"
+@using ShiftTool.Shared.Interfaces
+@using ShiftTool.Shared.DTOs
+@using Blazored.LocalStorage
+@using ShiftTool.Client.Services
+@inject IShiftService shiftService
+@inject IBookingService bookingService
+@inject ILocalStorageService localStorage
+@inject MessageService messageService
+@inject UserState userState
+
+@if (IsLoading)
+{
+    <p>Indlæser...</p>
+}
+else if (!string.IsNullOrEmpty(FeedbackMessage))
+{
+    <div class="alert alert-info">@FeedbackMessage</div>
+}
+else if (AvailableShifts.Any())
+{
+    <div class="card">
+        <div class="card-body">
+            <h3>Vælg en ledig vagt</h3>
+            <div class="row">
+                @foreach (var shift in AvailableShifts)
+                {
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-text"> @shift.Title</h5>
+                                <p class="card-title">Vagt ID: @shift.ShiftId</p>
+                                <p class="card-text">Beskrivelse: @shift.Description</p>
+                                <p class="card-text">Starttidspunkt: @shift.StartDateTime</p>
+                                <button class="btn btn-primary" @onclick="() => BookShift(shift)">Book Vagt</button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <p>Ingen ledige vagter tilgængelige.</p>
+}
+
+@code {
+    private List<ShiftDTO> AvailableShifts = new List<ShiftDTO>();
+    private bool IsLoading = true;
+    private string FeedbackMessage = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAvailableShifts();
+    }
+
+    private async Task LoadAvailableShifts()
+    {
+        try
+        {
+            var allShifts = await shiftService.GetAllShiftsAsync();
+            AvailableShifts = allShifts.Where(shift => !shift.IsBooked).ToList();
+            IsLoading = false;
+        }
+        catch (Exception ex)
+        {
+            FeedbackMessage = $"Fejl ved indlæsning af vagter: {ex.Message}";
+            IsLoading = false;
+        }
+    }
+
+    private async Task BookShift(ShiftDTO shift)
+    {
+        try
+        {
+            var email = userState.CurrentUser?.Email; // Hent e-mail fra UserState
+
+            if (!string.IsNullOrEmpty(email))
+            {
+                var newBooking = new BookingDTO
+                {
+                    ShiftId = shift.ShiftId,
+                    Email = email,
+                    BookedAt = DateTime.UtcNow
+                };
+
+                await bookingService.CreateBookingAsync(newBooking);
+                // Opdater UI for at afspejle den nyligt bookede vagt
+                // F.eks. fjern den bookede vagt fra listen over tilgængelige vagter
+            }
+            else
+            {
+                // Håndter situationen, hvor brugerens e-mail ikke er tilgængelig
+                // F.eks. vis en fejlmeddelelse til brugeren
+            }
+        }
+        catch (Exception ex)
+        {
+            // Fejlhåndtering: Log fejlen og vis en fejlmeddelelse til brugeren
+        }
+    }
+}

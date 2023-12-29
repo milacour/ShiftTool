@@ -1,0 +1,43 @@
+﻿@using ShiftTool.Shared.DTOs
+@using ShiftTool.Shared.Interfaces
+@using Blazored.Modal
+@using Blazored.Modal.Services
+@inject IModalService ModalService
+@inject IShiftService ShiftService
+@namespace ShiftTool.Client.Components
+
+<BlazoredModal>
+    <BlazoredModalHeader>Rediger Vagt</BlazoredModalHeader>
+    <BlazoredModalBody>
+        <EditForm Model="Shift" OnValidSubmit="HandleValidSubmit">
+            <div class="mb-3">
+                <label for="title" class="form-label">Titel:</label>
+                <InputText id="title" class="form-control" @bind-Value="Shift.Title" />
+            </div>
+            <div class="mb-3">
+                <label for="description" class="form-label">Beskrivelse:</label>
+                <InputTextArea id="description" class="form-control" @bind-Value="Shift.Description" />
+            </div>
+            <button type="submit" class="btn btn-primary">Gem</button>
+        </EditForm>
+    </BlazoredModalBody>
+    <BlazoredModalFooter>
+        <button class="btn btn-secondary" @onclick="Cancel">Annuller</button>
+    </BlazoredModalFooter>
+</BlazoredModal>
+
+@code {
+    [Parameter] public ShiftDTO Shift { get; set; }
+    [CascadingParameter] BlazoredModalInstance ModalInstance { get; set; }
+
+    private async Task HandleValidSubmit()
+    {
+        await ShiftService.UpdateShiftAsync(Shift.ShiftId, Shift);
+        await ModalInstance.CloseAsync(ModalResult.Ok(Shift));
+    }
+
+    private async Task Cancel()
+    {
+        await ModalInstance.CloseAsync(ModalResult.Cancel());
+    }
+}

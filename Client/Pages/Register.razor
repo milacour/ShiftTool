@@ -1,0 +1,85 @@
+﻿@page "/register"
+@using ShiftTool.Shared.DTOs
+@using ShiftTool.Client.Services
+@using Blazored.LocalStorage
+@inject IUserService userService
+@inject NavigationManager NavigationManager
+@inject MessageService messageService
+@inject ILocalStorageService localStorage
+@inject UserState userState
+
+    <div class="card">
+        <div class="card-body">
+            <EditForm Model="@userDto" OnValidSubmit="HandleRegister" class="p-4">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <h3 class="mb-3">Registrer</h3>
+
+                <div class="mb-3">
+                    <label for="fullName" class="form-label">Fuldt Navn:</label>
+                    <InputText id="fullName" class="form-control" @bind-Value="userDto.FullName" />
+                </div>
+                <div class="mb-3">
+                    <label for="email" class="form-label">E-mail:</label>
+                    <InputText id="email" class="form-control" @bind-Value="userDto.Email" />
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Kodeord:</label>
+                    <InputText id="password" class="form-control" type="password" @bind-Value="userDto.Password" />
+                </div>
+                <div class="mb-3">
+                    <label for="confirmPassword" class="form-label">Bekræft Kodeord:</label>
+                    <InputText id="confirmPassword" class="form-control" type="password" @bind-Value="userDto.ConfirmPassword" />
+                </div>
+                <div class="mb-3">
+                    <label for="phoneNumber" class="form-label">Telefonnummer:</label>
+                    <InputText id="phoneNumber" class="form-control" @bind-Value="userDto.PhoneNumber" />
+                </div>
+                <div class="mb-3">
+                    <label for="experience" class="form-label">Erfaring:</label>
+                    <select class="form-control" id="experience" @bind="userDto.Experience">
+                        <option value="0-1 år">0-1 år</option>
+                        <option value="1-3 år">1-3 år</option>
+                        <option value="3-5 år">3-5 år</option>
+                        <option value="5-10 år">5-10 år</option>
+                        <option value="10+ år">10+ år</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="skills" class="form-label">Færdigheder:</label>
+                    <InputText id="skills" class="form-control" @bind-Value="userDto.Skills" />
+                </div>
+                <div class="mb-3">
+                    <label for="isCoordinator" class="form-label">Er Koordinator:</label>
+                    <InputCheckbox id="isCoordinator" class="form-check-input" @bind-Value="userDto.IsCoordinator" />
+                </div>
+
+                <button type="submit" class="btn btn-primary">Registrer</button>
+            </EditForm>
+        </div>
+    </div>
+
+    @code {
+        private UserDTO userDto = new UserDTO();
+
+        private async Task HandleRegister()
+        {
+            // Validering sker automatisk pga. DataAnnotationsValidator
+            var response = await userService.RegisterUser(userDto);
+            if (response.IsSuccessStatusCode)
+            {
+                userState.Login(userDto);
+                await localStorage.SetItemAsync("user", userDto);
+
+                // Håndter succesfuld registrering
+                messageService.SendMessage("Registreringen blev fuldført.", false);
+                NavigationManager.NavigateTo("/profil");
+            }
+            else
+            {
+                // Håndter fejl ved registrering
+                messageService.SendMessage("Registreringen mislykkedes. Kontroller dine oplysninger og prøv igen.", true);
+            }
+        }
+    }

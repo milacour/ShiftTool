@@ -1,0 +1,47 @@
+﻿@using ShiftTool.Client.Services
+@inject MessageService messageService
+
+@namespace ShiftTool.Client.Components
+
+@if (showMessage && !string.IsNullOrEmpty(currentMessage))
+{
+    <div class="message-bar @messageClass">
+        @currentMessage
+    </div>
+}
+
+@code {
+    [Parameter]
+    public List<string>? messages { get; set; }
+
+    private bool showMessage = false;
+    private string currentMessage = "";
+    private string messageClass = "";
+
+    protected override void OnInitialized()
+    {
+        messageService.OnMessage += HandleMessage;
+    }
+
+    private void HandleMessage(string message, bool isError)
+    {
+        currentMessage = message;
+        showMessage = true;
+        messageClass = isError ? "error" : "success";
+
+        var timer = new System.Threading.Timer(async _ =>
+        {
+            await InvokeAsync(() =>
+            {
+                showMessage = false;
+                StateHasChanged();
+            });
+        }, null, 2000, Timeout.Infinite); 
+
+    }
+
+    public void Dispose()
+    {
+        messageService.OnMessage -= HandleMessage;
+    }
+}
